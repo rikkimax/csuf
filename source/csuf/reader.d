@@ -24,7 +24,7 @@ struct CommandSequenceReader(String) if (isSomeString!String) {
 	Entry!String[] entries;
 
 	///
-	this(String sourceText, String resetCommand = "reset") {
+	this(String sourceText, String resetCommand = "new") {
 		import std.algorithm : sum, map, count, splitter;
 		import std.string : lineSplitter, strip;
 
