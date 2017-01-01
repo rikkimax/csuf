@@ -1,0 +1,9 @@
+{
+	"name": "csuf",
+	"authors": [
+		"Richard (Rikki) Andrew Cattermole"
+	],
+	"description": "Command Sequence Unoriginal Format",
+	"copyright": "Copyright © 2017, Richard (Rikki) Andrew Cattermole",
+	"license": "Boost"
+}
