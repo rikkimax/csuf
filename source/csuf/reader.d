@@ -73,17 +73,6 @@ struct CommandSequenceReader(String) if (isSomeString!String) {
 
 				foreach(v; line.splitter(' ')) {
 					if (idx == 0) {
-
-						if (entry !is null) {
-							foreach(cmd; entry.commands) {
-								offsetCommandArg += cmd.args.length;
-							}
-
-							foreach(info; entry.information) {
-								offsetInformationArg += info.args.length;
-							}
-						}
-
 						if (v[0] == '.') {
 							lastWasCommand = true;
 							if (v.length == 1)
@@ -91,6 +80,14 @@ struct CommandSequenceReader(String) if (isSomeString!String) {
 
 							if (v.length == resetCommand.length + 1 && v[1 .. $] == resetCommand) {
 								if (entry !is null) {
+									foreach(cmd; entry.commands) {
+										offsetCommandArg += cmd.args.length;
+									}
+									
+									foreach(info; entry.information) {
+										offsetInformationArg += info.args.length;
+									}
+
 									offsetEntry++;
 									offsetInformation += entry.information.length;
 									offsetCommand += entry.commands.length;
