@@ -2,6 +2,8 @@
 
 A simplistic file format, meant for read only data.
 
+Sister format for [chunked binary data](https://github.com/rikkimax/cubf).
+
 ## Example:
 
 ```csuf
