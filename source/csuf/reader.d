@@ -90,15 +90,20 @@ struct CommandSequenceReader(String) if (isSomeString!String) {
 				foreach(v; line.splitter(' ')) {
 					if (idx == 0) {
 						if (v[0] == '.' && (v.length > 1 && v[1] == '.')) {
+							lastWasCommand = false;
 							lastWasInformationCommand = true;
 							// ..
-							
+
+							if (entry !is null && entry.information.length > 0 && entry.information[$-1].commands.length > 0) {
+								offsetInformationCommandArg += entry.information[$-1].commands[$-1].args.length;
+							}
+
 							if (entry.information[$-1].commands is null) {
 								entry.information[$-1].commands = allInformationCommands[offsetInformationCommand .. offsetInformationCommand + 1];
 							} else {
-								entry.information[$-1].commands = allInformationCommands[offsetInformationCommand .. offsetInformationCommand + entry.information[$-1].args.length + 1];
+								entry.information[$-1].commands = allInformationCommands[offsetInformationCommand .. offsetInformationCommand + entry.information[$-1].commands.length + 1];
 							}
-							
+
 							entry.information[$-1].commands[$-1].name = v[2 .. $];
 						} else if (v[0] == '.') {
 							lastWasCommand = true;
@@ -107,6 +112,10 @@ struct CommandSequenceReader(String) if (isSomeString!String) {
 							if (v.length > 2 && v[1] == '\\' && v[2] == '.') {
 								(cast(char[])v)[1] = '.'; // .\. -> ...<token> <token ...>
 								v = v[1 .. $]; // -> ..<token> <token ...>
+							}
+
+							if (entry !is null && entry.commands.length > 0) {
+								offsetCommandArg++;
 							}
 
 							if (v.length == resetCommand.length + 1 && v[1 .. $] == resetCommand) {
@@ -118,6 +127,10 @@ struct CommandSequenceReader(String) if (isSomeString!String) {
 									foreach(info; entry.information) {
 										offsetInformationArg += info.args.length;
 										offsetInformationCommand += info.commands.length;
+
+										foreach(cmd; info.commands) {
+											offsetInformationCommandArg += cmd.args.length;
+										}
 									}
 									
 									offsetEntry++;
@@ -270,4 +283,18 @@ Bye <name> loozer
 
 .\\.a command
 ", "new");
+}
+
+///
+unittest {
+	CommandSequenceReader!string reader = CommandSequenceReader!string("
+.new HEADER
+.something here
+
+.new
+abcd
+", "new");
+
+	import std.stdio;
+	writeln(reader.entries);
 }
