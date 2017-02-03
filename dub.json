@@ -5,5 +5,14 @@
 	],
 	"description": "Command Sequence Unoriginal Format",
 	"copyright": "Copyright © 2017, Richard (Rikki) Andrew Cattermole",
-	"license": "Boost"
+	"license": "Boost",
+	"excludedSourceFiles": ["source/test.d"],
+
+	"subPackages": [
+		{
+			"name": "test",
+			"sourceFiles": ["source/test.d"],
+			"targetType": "executable"
+		}
+	]
 }
