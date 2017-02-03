@@ -120,10 +120,6 @@ struct CommandSequenceReader(String) if (isSomeString!String) {
 
 							if (v.length == resetCommand.length + 1 && v[1 .. $] == resetCommand) {
 								if (entry !is null) {
-									foreach(cmd; entry.commands) {
-										offsetCommandArg += cmd.args.length;
-									}
-									
 									foreach(info; entry.information) {
 										offsetInformationArg += info.args.length;
 										offsetInformationCommand += info.commands.length;
