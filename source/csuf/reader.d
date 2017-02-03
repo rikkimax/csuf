@@ -227,7 +227,7 @@ struct Item(String) if (isSomeString!String) {
 	///
 	T get(T)(size_t offset, T default_ = T.init) if (!(is(T == struct) || is(T == class) || is(T == union) || isPointer!T)) {
 		import std.conv : to;
-		if (args.length <= offset) {
+		if (args.length > offset) {
 			return to!T(args[offset]);
 		} else {
 			return default_;
