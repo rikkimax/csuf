@@ -15,6 +15,14 @@ Hi <name>
 .something back 6
 
 Bye <name> loozer
+
+.new
+
+some value
+
+..command for value
+.set global
+..another command for value
 ```
 
 ## Syntax
@@ -27,5 +35,11 @@ Information:
 
     <token> <token ...>
 
-If first token is to be an information line, then it must be escaped by using ``\``.
+Information Command:
+
+    ..<token> <token ...>
+
+You may escape the first token, for information use ``\.`` to get ``.``. For a command use ``.\\.`` to get a command that starts with a 
+``.``.
+Information commands assign a command specifically to a single information entry.
 All entries are reset given a specific command, default: ``new``.

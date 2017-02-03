@@ -103,7 +103,12 @@ struct CommandSequenceReader(String) if (isSomeString!String) {
 						} else if (v[0] == '.') {
 							lastWasCommand = true;
 							lastWasInformationCommand = false;
-							
+
+							if (v.length > 2 && v[1] == '\\' && v[2] == '.') {
+								(cast(char[])v)[1] = '.'; // .\. -> ...<token> <token ...>
+								v = v[1 .. $]; // -> ..<token> <token ...>
+							}
+
 							if (v.length == resetCommand.length + 1 && v[1 .. $] == resetCommand) {
 								if (entry !is null) {
 									foreach(cmd; entry.commands) {
@@ -263,5 +268,6 @@ Hi <name>
 Bye <name> loozer
 ..myend here!
 
+.\\.a command
 ", "new");
 }
