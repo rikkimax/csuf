@@ -80,86 +80,89 @@ struct CommandSequenceReader(String) if (isSomeString!String) {
 		size_t offsetEntry, offsetCommand, offsetInformation, offsetInformationCommand,
 			offsetCommandArg, offsetInformationArg, offsetInformationCommandArg;
 		
+		bool lastWasCommand, lastWasInformationCommand, needInfoCmdReset;
 		foreach(line; sourceText.lineSplitter) {
 			line = line.strip;
 			
 			if (line.length > 0) {
 				uint idx;
-				bool lastWasCommand, lastWasInformationCommand;
 				
 				foreach(v; line.splitter(' ')) {
 					if (idx == 0) {
-						if (v[0] == '.' && (v.length > 1 && v[1] == '.')) {
-							lastWasCommand = false;
-							lastWasInformationCommand = true;
-							// ..
-
-							if (entry !is null && entry.information.length > 0 && entry.information[$-1].commands.length > 0) {
+						if (entry !is null) {
+							if (lastWasCommand) {
+								offsetCommandArg += entry.commands[$-1].args.length;
+							} else if (lastWasInformationCommand) {
 								offsetInformationCommandArg += entry.information[$-1].commands[$-1].args.length;
-							}
-
-							if (entry.information[$-1].commands is null) {
-								entry.information[$-1].commands = allInformationCommands[offsetInformationCommand .. offsetInformationCommand + 1];
 							} else {
-								entry.information[$-1].commands = allInformationCommands[offsetInformationCommand .. offsetInformationCommand + entry.information[$-1].commands.length + 1];
+								offsetInformationArg += entry.information[$-1].args.length;
 							}
-
-							entry.information[$-1].commands[$-1].name = v[2 .. $];
-						} else if (v[0] == '.') {
-							lastWasCommand = true;
-							lastWasInformationCommand = false;
-
-							if (v.length > 2 && v[1] == '\\' && v[2] == '.') {
-								(cast(char[])v)[1] = '.'; // .\. -> ...<token> <token ...>
-								v = v[1 .. $]; // -> ..<token> <token ...>
-							}
-
-							if (entry !is null && entry.commands.length > 0) {
-								offsetCommandArg++;
-							}
-
-							if (v.length == resetCommand.length + 1 && v[1 .. $] == resetCommand) {
-								if (entry !is null) {
-									foreach(info; entry.information) {
-										offsetInformationArg += info.args.length;
-										offsetInformationCommand += info.commands.length;
-
-										foreach(cmd; info.commands) {
-											offsetInformationCommandArg += cmd.args.length;
-										}
-									}
-									
-									offsetEntry++;
-									offsetInformation += entry.information.length;
-									offsetCommand += entry.commands.length;
+						}
+						
+						if (v[0] == '.') {
+							if (entry !is null && v.length > 1 && v[1] == '.') {
+								// ..token
+								
+								lastWasCommand = false;
+								lastWasInformationCommand = true;
+								needInfoCmdReset = true;
+								
+								if (entry.commands is null) {
+									entry.information[$-1].commands = allInformationCommands[offsetInformationCommand .. offsetInformationCommand + 1];
+								} else {
+									entry.information[$-1].commands = allInformationCommands[offsetInformationCommand .. offsetInformationCommand + 1 + entry.information[$-1].commands.length];
 								}
 								
-								entry = &entries[offsetEntry];
+								entry.information[$-1].commands[$-1].name = v[2 .. $];
+							} else if (v[1 .. $] == resetCommand) {
+								// .new
+								
+								if (entry !is null) {
+									offsetCommand += entry.commands.length;
+									offsetInformation += entry.information.length;
+									
+									if (needInfoCmdReset) {
+										needInfoCmdReset = false;
+										offsetInformationCommand += entry.information[$-1].commands.length;
+									}
+								}
+								
+								entry = &entries[offsetEntry++];
+								goto DotToken;
+							} else if (entry !is null) {
+								// .token
+							DotToken:
+								
+								lastWasCommand = true;
+								lastWasInformationCommand = false;
+								
+								if (entry.commands is null) {
+									entry.commands = allCommands[offsetCommand .. offsetCommand + 1];
+								} else {
+									entry.commands = allCommands[offsetCommand .. offsetCommand + 1 + entry.commands.length];
+								}
+								
+								entry.commands[$-1].name = v[1 .. $];
 							}
-							
-							if (entry.commands is null) {
-								entry.commands = allCommands[offsetCommand .. offsetCommand + 1];
-							} else {
-								entry.commands = allCommands[offsetCommand .. offsetCommand + entry.commands.length + 1];
-							}
-							
-							entry.commands[$-1].name = v[1 .. $];
 						} else {
+							// token
+							
 							lastWasCommand = false;
 							lastWasInformationCommand = false;
 							
-							if (v.length > 1 && v[0] == '\\' && v[1] == '.')
-								v = v[1 .. $];
+							if (needInfoCmdReset) {
+								needInfoCmdReset = false;
+								offsetInformationCommand += entry.information[$-1].commands.length;
+							}
 							
-							if (entry.commands is null) {
+							if (entry.information is null) {
 								entry.information = allInformation[offsetInformation .. offsetInformation + 1];
 							} else {
-								entry.information = allInformation[offsetInformation .. offsetInformation + entry.information.length + 1];
+								entry.information = allInformation[offsetInformation .. offsetInformation + 1 + entry.information.length];
 							}
 							
 							entry.information[$-1].name = v;
 						}
-						
 					} else {
 						if (lastWasCommand) {
 							if (entry.commands[$-1].args is null) {
@@ -170,10 +173,12 @@ struct CommandSequenceReader(String) if (isSomeString!String) {
 							
 							entry.commands[$-1].args[$-1] = v;
 						} else if (lastWasInformationCommand) {
-							if (entry.information[$-1].commands is null) {
+							assert(entry.information[$-1].commands.length > 0);
+							
+							if (entry.information[$-1].commands[$-1].args is null) {
 								entry.information[$-1].commands[$-1].args = allArgsInformationCommands[offsetInformationCommandArg .. offsetInformationCommandArg + 1];
 							} else {
-								entry.information[$-1].commands[$-1].args = allArgsInformationCommands[offsetInformationCommandArg .. offsetInformationCommandArg + entry.information[$-1].commands.length + 1];
+								entry.information[$-1].commands[$-1].args = allArgsInformationCommands[offsetInformationCommandArg .. offsetInformationCommandArg + entry.information[$-1].commands[$-1].args.length + 1];
 							}
 							
 							entry.information[$-1].commands[$-1].args[$-1] = v;
@@ -290,7 +295,4 @@ unittest {
 .new
 abcd
 ", "new");
-
-	import std.stdio;
-	writeln(reader.entries);
 }
